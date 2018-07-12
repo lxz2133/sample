@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-class UserController extends Controller
+class UsersController extends Controller
 {
     public function create()
     {
