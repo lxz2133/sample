@@ -1,16 +1,17 @@
-<?php
-/**
- * Created by PhpStorm.
- * User: lxz
- * Date: 2018/7/11
- * Time: 15:59
- */
-?><!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
-    <title>@yield('title', 'Sample')</title>
+    <title>@yield('title', 'Sample App') - Laravel 入门教程</title>
+    <link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
-@yield('content')
+@include('layouts._header')
+
+<div class="container">
+    <div class="col-md-offset-1 col-md-10">
+        @yield('content')
+        @include('layouts._footer')
+    </div>
+</div>
 </body>
 </html>
