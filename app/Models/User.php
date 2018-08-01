@@ -29,6 +29,9 @@ use App\Notifications\ResetPassword;
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\User whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\User whereIsAdmin($value)
  * @mixin \Eloquent
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Status[] $statuses
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\User whereActivated($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\User whereActivationToken($value)
  */
 class User extends Authenticatable
 {
@@ -80,5 +83,15 @@ class User extends Authenticatable
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new ResetPassword($token));
+    }
+
+    public function statuses()
+    {
+        return $this->hasMany(Status::class);
+    }
+
+    public function feed()
+    {
+        return $this->statuses()->orderBy('created_at', 'desc');
     }
 }
