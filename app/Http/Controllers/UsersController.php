@@ -50,7 +50,7 @@ class UsersController extends Controller
      */
     public function show(User $user)
     {
-        $statuses = $user->feed()->paginate(30);
+        $statuses = $user->statuses()->orderBy('created_at', 'desc')->paginate(30);
         return view('users.show', compact('user', 'statuses'));
     }
 
@@ -78,9 +78,9 @@ class UsersController extends Controller
         ]);
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => bcrypt($request->password),
+            'name' => $request->input('name'),
+            'email' => $request->input('email'),
+            'password' => bcrypt($request->input('password')),
         ]);
 
         $this->sendEmailConfirmationTo($user);
@@ -104,9 +104,9 @@ class UsersController extends Controller
         $this->authorize('update', $user);
 
         $data = [];
-        $data['name'] = $request->name;
-        if ($request->password) {
-            $data['password'] = bcrypt($request->password);
+        $data['name'] = $request->input('name');
+        if ($request->input('password')) {
+            $data['password'] = bcrypt($request->input('password'));
         }
         $user->update($data);
 
@@ -154,9 +154,31 @@ class UsersController extends Controller
         $data = compact('user');
         $to = $user->email;
         $subject = "感谢注册 Sample 应用！请确认你的邮箱。";
-
         Mail::send($view, $data, function ($message) use ($to, $subject) {
+            /** @var \Illuminate\Mail\Message $message */
             $message->to($to)->subject($subject);
         });
+    }
+
+    /**
+     * @param User $user
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function followers(User $user)
+    {
+        $users = $user->followers()->paginate(30);
+        $title = "粉丝";
+        return view('users.show_follow', compact('users', 'title'));
+    }
+
+    /**
+     * @param User $user
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function followings(User $user)
+    {
+        $users = $user->followings()->paginate(30);
+        $title = "关注";
+        return view('users.show_follow', compact('users', 'title'));
     }
 }

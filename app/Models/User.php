@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use App\Notifications\ResetPassword;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Notifications\ResetPassword;
-
+use Auth;
 /**
  * App\Models\User
  *
@@ -20,18 +20,20 @@ use App\Notifications\ResetPassword;
  * @property string $activation_token
  * @property boolean $activated
  * @property-read \Illuminate\Notifications\DatabaseNotificationCollection|\Illuminate\Notifications\DatabaseNotification[] $notifications
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\User whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\User whereEmail($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\User whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\User whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\User wherePassword($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\User whereRememberToken($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\User whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\User whereIsAdmin($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User wherePassword($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereRememberToken($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereIsAdmin($value)
  * @mixin \Eloquent
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Status[] $statuses
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\User whereActivated($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\User whereActivationToken($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereActivated($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereActivationToken($value)
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\User[] $followers
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\User[] $followings
  */
 class User extends Authenticatable
 {
@@ -92,6 +94,41 @@ class User extends Authenticatable
 
     public function feed()
     {
-        return $this->statuses()->orderBy('created_at', 'desc');
+        $user_ids = Auth::user()->followings->pluck('id')->toArray();
+        array_push($user_ids, Auth::user()->id);
+        return Status::whereIn('user_id', $user_ids)->with('user')->orderBy('created_at', 'desc');
     }
+
+    public function followers()
+    {
+        return $this->belongsToMany(User::Class, 'followers', 'user_id', 'follower_id');
+    }
+
+    public function followings()
+    {
+        return $this->belongsToMany(User::Class, 'followers', 'follower_id', 'user_id');
+    }
+
+    public function follow($userIds)
+    {
+        if (!is_array($userIds)) {
+            $userIds = compact('userIds');
+        }
+        $this->followings()->sync($userIds, false);
+    }
+
+    public function unfollow($userIds)
+    {
+        if (!is_array($userIds)) {
+            $userIds = compact('userIds');
+        }
+        $this->followings()->detach($userIds);
+    }
+
+    public function isFollowing($userId)
+    {
+        //equal to return $this->followings->contains($user_id)
+        return $this->followings()->get()->contains($userId);
+    }
+
 }
